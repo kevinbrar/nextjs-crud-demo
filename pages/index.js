@@ -40,7 +40,7 @@ export default function Home() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="{editingIndex !== null ? 'Edit item' : 'Add an item'}"
+          placeholder={editingIndex !== null ? 'Edit item' : 'Add an item'}
         />
         <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleAdd}>
           {editingIndex !== null ? 'Update' : 'Add'}
