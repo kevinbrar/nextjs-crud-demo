@@ -1,52 +1,29 @@
-// pages/index.js
-import React, { useState } from 'react';
+// pages/api/ask.js
+export default async function handler(req, res) {
+  const { query } = req.body;
 
-export default function Home() {
-  const [query, setQuery] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Fake doc context (in real RAG, you'd retrieve from a vector store)
+  const context = "RAG stands for Retrieval-Augmented Generation. It's used to improve LLM outputs with external info.";
 
-  const handleSubmit = async () => {
-    if (!query.trim()) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
-      });
-      const data = await res.json();
-      setAnswer(data.answer);
-    } catch (err) {
-      setAnswer('Error fetching response.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const prompt = `Use the following context to answer the question:\n\nContext: ${context}\n\nQuestion: ${query}`;
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
-      <h1 className="text-2xl font-bold mb-4">RAG App Demo</h1>
-      <input
-        className="w-full max-w-md border p-2 rounded mb-4"
-        type="text"
-        placeholder="Ask a question..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? 'Loading...' : 'Submit'}
-      </button>
-      {answer && (
-        <div className="w-full max-w-md bg-white p-4 rounded shadow">
-          <h2 className="font-semibold mb-2">Answer:</h2>
-          <p>{answer}</p>
-        </div>
-      )}
-    </div>
-  );
+  try {
+    const response = await fetch("https://api.openai.com/v1/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "text-davinci-003",
+        prompt,
+        max_tokens: 100,
+      }),
+    });
+
+    const data = await response.json();
+    res.status(200).json({ answer: data.choices?.[0]?.text.trim() || "No answer." });
+  } catch (err) {
+    res.status(500).json({ answer: "Failed to contact LLM." });
+  }
 }
